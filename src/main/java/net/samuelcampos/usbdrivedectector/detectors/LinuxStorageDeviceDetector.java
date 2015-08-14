@@ -27,7 +27,11 @@ import org.apache.log4j.Logger;
 /**
  * Tested on Linux Ubuntu 13.10
  *
+ * Altered to work on openSUSE 13.2 with udevadm version 210
+ * Instead of looking for the driver name/id, looks if the device is in one of the usb folders (not all usb devices/distros use/show usb_storage)
+ *
  * @author samuelcampos
+ * @author FelixResch
  */
 public class LinuxStorageDeviceDetector extends AbstractStorageDeviceDetector {
 
@@ -37,7 +41,7 @@ public class LinuxStorageDeviceDetector extends AbstractStorageDeviceDetector {
     private static final String linuxDetectUSBCommand1 = "df";
     private static final Pattern command1Pattern = Pattern.compile("^(\\/[^ ]+)[^%]+%[ ]+(.+)$");
     private static final String linuxDetectUSBCommand2 = "udevadm info -q property -n ";
-    private static final String strDeviceVerifier = "ID_USB_DRIVER=usb-storage";
+    private static final Pattern strDeviceVerifierPattern = Pattern.compile("DEVPATH=.*(usb).*");
 
     private final CommandLineExecutor commandExecutor1, commandExecutor2;
 
@@ -56,7 +60,8 @@ public class LinuxStorageDeviceDetector extends AbstractStorageDeviceDetector {
 
             String outputLine;
             while ((outputLine = commandExecutor2.readOutputLine()) != null) {
-                if (strDeviceVerifier.equals(outputLine)) {
+                Matcher matcher = strDeviceVerifierPattern.matcher(outputLine);
+                if (matcher.matches()) {
                     return true;
                 }
             }
